@@ -4,6 +4,10 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
 from .models import CustomUser, DossierDemande, SuiviDossier, Notification
 from .serializers import (
     UserCreateSerializer, UserPublicSerializer,
@@ -103,3 +107,21 @@ class NotificationViewSet(viewsets.ModelViewSet):
         if not (self.request.user.role in ("agent", "admin")):
             raise PermissionError("Non autorisé.")
         serializer.save()
+
+@api_view(['GET'])
+def api_home(request):
+    """
+    Vue d'accueil de l'API ASDM
+    """
+    return Response({
+        'message': 'Bienvenue sur l\'API ASDM Backend',
+        'status': 'active',
+        'version': '1.0.0',
+        'endpoints': {
+            'users': '/api/users/',
+            'dossiers': '/api/dossiers/',
+            'suivis': '/api/suivis/',
+            'notifications': '/api/notifications/',
+            'admin': '/admin/',
+        }
+    }, status=status.HTTP_200_OK)
