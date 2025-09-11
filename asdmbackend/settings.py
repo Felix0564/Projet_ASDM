@@ -11,7 +11,8 @@ env = environ.Env()
 environ.Env.read_env()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-2v72_5dar8)sitov3q0yee4pf195xihvf!r26$8f&6$(ah=h&!"
+# Read from environment in production
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-CHANGE_ME_FOR_LOCAL_DEV_ONLY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
@@ -33,11 +34,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "app_principale",
     "django_filters",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    #"whitenoise.middleware.WhiteNoiseMiddleware",  # Ajoutez cette ligne
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -92,9 +95,13 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+ # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 # Media (upload)
 MEDIA_URL = "/media/"
@@ -111,6 +118,18 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ]
 }
+
+# CORS (allow frontend origins; extend as needed)
+CORS_ALLOWED_ORIGINS = [
+    "https://projet-asdm.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Security cookies in production
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 # from pathlib import Path
 # import os
 # import environ
