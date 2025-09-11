@@ -17,9 +17,16 @@ environ.Env.read_env()
 SECRET_KEY = "django-insecure-2v72_5dar8)sitov3q0yee4pf195xihvf!r26$8f&6$(ah=h&!"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = environ.Env.bool(env, "DEBUG", default=False)
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ["projet-asdm.onrender.com", ".onrender.com", "localhost", "127.0.0.1"]
+
+CSRF_TRUSTED_ORIGINS = ["https://projet-asdm.onrender.com", "https://*.onrender.com"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
@@ -62,6 +69,7 @@ TEMPLATES = [
             ],
         },
     },
+    
 ]
 
 WSGI_APPLICATION = "asdmbackend.wsgi.application"

@@ -1,0 +1,39 @@
+# Django Framework
+Django==5.2.5
+
+# Django REST Framework
+djangorestframework==3.16.1
+
+# JWT Authentication
+djangorestframework-simplejwt==5.5.1
+
+# Database
+psycopg2-binary==2.9.10
+dj-database-url==3.0.1
+
+# Environment variables
+django-environ==0.12.0
+
+# Filtering
+django-filter==25.1
+
+# Image processing
+Pillow==11.3.0
+
+# ASGI server
+gunicorn==23.0.0
+
+# ASGI support
+asgiref==3.9.1
+
+# SQL parsing
+sqlparse==0.5.3
+
+# Timezone data
+tzdata==2025.2
+
+# JWT library
+PyJWT==2.10.1
+
+# Packaging utilities
+packaging==25.0
