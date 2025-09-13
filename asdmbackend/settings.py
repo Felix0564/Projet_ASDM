@@ -1,5 +1,4 @@
 
-
 from pathlib import Path
 import os
 import environ
@@ -37,6 +36,11 @@ INSTALLED_APPS = [
     "corsheaders",
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'app_principale.auth_backend.UtilisateurAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',  # Fallback
+]
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -47,6 +51,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'app_principale.views.UtilisateurAuthMiddleware',
 ]
 
 ROOT_URLCONF = "asdmbackend.urls"
@@ -110,7 +115,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'app_principale.CustomUser'
+#AUTH_USER_MODEL = 'app_principale.CustomUser'
 
 # REST Framework configuration (si vous l'utilisez)
 REST_FRAMEWORK = {

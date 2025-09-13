@@ -41,3 +41,4 @@ packaging==25.0
 # Static files and CORS
 whitenoise==6.7.0
 django-cors-headers==4.6.0
+#django-cors-headers==4.6.0
