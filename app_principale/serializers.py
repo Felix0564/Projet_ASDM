@@ -37,9 +37,12 @@ class AgentASDMSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
 class DocumentSerializer(serializers.ModelSerializer):
+    demande_subvention_id = serializers.PrimaryKeyRelatedField(
+        queryset=DemandeSubvention.objects.all(), write_only=True, source='demande_subvention', required=False
+    )
     class Meta:
         model = Document
-        fields = ("id", "nom", "type", "chemin_fichier", "date_upload", "taille_fichier")
+        fields = ("id", "nom", "type", "chemin_fichier", "date_upload", "taille_fichier", "demande_subvention_id")
         read_only_fields = ("id", "date_upload", "taille_fichier")
 
     def create(self, validated_data):
@@ -49,15 +52,18 @@ class DocumentSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class PaiementSerializer(serializers.ModelSerializer):
+    demande_subvention_id = serializers.PrimaryKeyRelatedField(
+        queryset=DemandeSubvention.objects.all(), write_only=True, source='demande_subvention'
+    )
     class Meta:
         model = Paiement
-        fields = ("id", "montant", "date_paiement", "mode_paiement", "reference", "statut")
+        fields = ("id", "montant", "date_paiement", "mode_paiement", "reference", "statut", "demande_subvention_id")
         read_only_fields = ("id", "date_paiement")
 
 class DemandeSubventionSerializer(serializers.ModelSerializer):
     utilisateur = UtilisateurPublicSerializer(read_only=True)
     utilisateur_id = serializers.PrimaryKeyRelatedField(
-        queryset=Utilisateur.objects.all(), write_only=True, source='utilisateur'
+        queryset=Utilisateur.objects.all(), write_only=True, source='utilisateur', required=False
     )
     documents = DocumentSerializer(many=True, read_only=True)
     paiement = PaiementSerializer(read_only=True)

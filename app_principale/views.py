@@ -174,10 +174,22 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
     ordering_fields = ["date_soumission", "montant"]
 
     def perform_create(self, serializer):
-        user_id = self.request.session.get('user_id')
-        if user_id:
-            utilisateur = Utilisateur.objects.get(id=user_id)
-            serializer.save(utilisateur=utilisateur)
+        # Respecte un utilisateur_id fourni, sinon fallback session
+        utilisateur_obj = None
+        utilisateur_from_request = self.request.data.get('utilisateur_id')
+        if utilisateur_from_request:
+            try:
+                utilisateur_obj = Utilisateur.objects.get(id=utilisateur_from_request)
+            except Utilisateur.DoesNotExist:
+                pass
+        if utilisateur_obj is None:
+            user_id = self.request.session.get('user_id')
+            if user_id:
+                utilisateur_obj = Utilisateur.objects.get(id=user_id)
+        if utilisateur_obj is not None:
+            serializer.save(utilisateur=utilisateur_obj)
+        else:
+            serializer.save()
 
     @action(methods=["patch"], detail=True, url_path="statut")
     def update_statut(self, request, pk=None):
