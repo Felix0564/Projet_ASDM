@@ -16,7 +16,7 @@ from .serializers import (
     DemandeSubventionSerializer, DemandeSubventionUpdateStatutSerializer,
     DocumentSerializer, PaiementSerializer, RapportSerializer, NotificationSerializer
 )
-from .permissions import IsOwnerOrReadOnly, IsAdmin, IsAgent
+from .permissions import IsOwnerOrReadOnly, IsAdmin, IsAgent, IsAuthenticatedCustom
 
 # ---- Authentification personnalisée ----
 @api_view(['POST'])
@@ -54,7 +54,7 @@ def login_view(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedCustom])
 def logout_view(request):
     """
     Déconnexion
@@ -134,7 +134,7 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
 class AgentASDMViewSet(viewsets.ModelViewSet):
     queryset = AgentASDM.objects.select_related("utilisateur").all().order_by("-utilisateur__date_creation")
     serializer_class = AgentASDMSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticatedCustom, IsAdmin]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["utilisateur__email", "utilisateur__prenom", "utilisateur__nom", "fonction", "departement"]
     ordering_fields = ["utilisateur__date_creation"]
@@ -167,7 +167,7 @@ class AgentASDMViewSet(viewsets.ModelViewSet):
 class DemandeSubventionViewSet(viewsets.ModelViewSet):
     queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant__utilisateur").all().order_by("-date_soumission")
     serializer_class = DemandeSubventionSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedCustom, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["type", "statut", "utilisateur", "agent_traitant"]
     search_fields = ["commentaires"]
@@ -205,7 +205,7 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.select_related("demande_subvention").all().order_by("-date_upload")
     serializer_class = DocumentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedCustom]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["type", "demande_subvention"]
     ordering_fields = ["date_upload", "taille_fichier"]
@@ -214,7 +214,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 class PaiementViewSet(viewsets.ModelViewSet):
     queryset = Paiement.objects.select_related("demande_subvention").all().order_by("-date_paiement")
     serializer_class = PaiementSerializer
-    permission_classes = [IsAuthenticated, IsAgent]
+    permission_classes = [IsAuthenticatedCustom, IsAgent]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["statut", "mode_paiement", "demande_subvention"]
     ordering_fields = ["date_paiement", "montant"]
@@ -237,7 +237,7 @@ class PaiementViewSet(viewsets.ModelViewSet):
 class RapportViewSet(viewsets.ModelViewSet):
     queryset = Rapport.objects.select_related("agent__utilisateur").all().order_by("-date_generation")
     serializer_class = RapportSerializer
-    permission_classes = [IsAuthenticated, IsAgent]
+    permission_classes = [IsAuthenticatedCustom, IsAgent]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["format", "agent", "periode"]
     ordering_fields = ["date_generation"]
@@ -255,7 +255,7 @@ class RapportViewSet(viewsets.ModelViewSet):
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.select_related("utilisateur").all().order_by("-date_envoi")
     serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedCustom]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_fields = ["utilisateur", "type", "lu", "priorite"]
     ordering_fields = ["date_envoi"]

@@ -54,6 +54,11 @@ class Utilisateur(models.Model):
     def date_joined(self):
             return self.date_creation
 
+    @property
+    def is_authenticated(self):
+        # Pour compatibilité avec DRF/permissions si request.user est défini
+        return True
+
 
 class AgentASDM(models.Model):
    
@@ -133,7 +138,7 @@ class DemandeSubvention(models.Model):
         ('refuse', 'Refusé'),
     ]
     
-    # Attributs du diagramme UML
+    
     id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=50, choices=TYPES)
     montant = models.DecimalField(max_digits=10, decimal_places=2)
@@ -188,7 +193,7 @@ class Paiement(models.Model):
         ('annule', 'Annulé'),
     ]
     
-    # Attributs du diagramme UML
+   
     id = models.AutoField(primary_key=True)
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     date_paiement = models.DateTimeField(null=True, blank=True)
@@ -196,11 +201,10 @@ class Paiement(models.Model):
     reference = models.CharField(max_length=100, unique=True)
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
     
-    # Relation avec DemandeSubvention (1:1)
     demande_subvention = models.OneToOneField(DemandeSubvention, on_delete=models.CASCADE, related_name='paiement')
     
     def __str__(self):
-        return f"Paiement {self.reference} - {self.montant}€"
+        return f"Paiement {self.reference} - {self.montant}FCFA"
     
     def traiter(self):
         """Traite le paiement"""
@@ -220,10 +224,7 @@ class Paiement(models.Model):
         return True
 
 class Document(models.Model):
-    """
-    Représente un document attaché à une demande de subvention
-    Correspond exactement au diagramme UML
-    """
+   
     TYPES = [
         ('pdf', 'PDF'),
         ('image', 'Image'),
@@ -232,15 +233,14 @@ class Document(models.Model):
         ('autre', 'Autre'),
     ]
     
-    # Attributs du diagramme UML
+    
     id = models.AutoField(primary_key=True)
     nom = models.CharField(max_length=255)
     type = models.CharField(max_length=20, choices=TYPES)
     chemin_fichier = models.FileField(upload_to='documents/')
     date_upload = models.DateTimeField(auto_now_add=True)
     taille_fichier = models.BigIntegerField()
-    
-    # Relation avec DemandeSubvention (N:1)
+   
     demande_subvention = models.ForeignKey(DemandeSubvention, on_delete=models.CASCADE, related_name='documents')
     
     def __str__(self):
@@ -265,17 +265,14 @@ class Document(models.Model):
 
 
 class Rapport(models.Model):
-    """
-    Représente un rapport généré par le système
-    Correspond exactement au diagramme UML
-    """
+    
     FORMATS = [
         ('pdf', 'PDF'),
         ('csv', 'CSV'),
         ('excel', 'Excel'),
     ]
     
-    # Attributs du diagramme UML
+   
     id = models.AutoField(primary_key=True)
     periode = models.CharField(max_length=100)
     date_generation = models.DateTimeField(auto_now_add=True)
@@ -321,7 +318,7 @@ class Notification(models.Model):
         ('critique', 'Critique'),
     ]
     
-    # Attributs du diagramme UML
+    
     id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=20, choices=TYPES)
     contenu = models.TextField()
@@ -329,7 +326,7 @@ class Notification(models.Model):
     lu = models.BooleanField(default=False)
     priorite = models.CharField(max_length=20, choices=PRIORITES, default='normale')
     
-    # Relation avec Utilisateur (N:1)
+   
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='notifications')
     
     def __str__(self):

@@ -1,7 +1,7 @@
 from django.contrib.auth.backends import BaseBackend
 from .models import Utilisateur
 
-class UtilisateurAhthBackend(BaseBackend):
+class UtilisateurAuthBackend(BaseBackend):
     def authenticate(self, request, email=None, password=None,**kwargs):
         try:
             utilisateur=Utilisateur.objects.get(email=email)

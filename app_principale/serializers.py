@@ -42,6 +42,12 @@ class DocumentSerializer(serializers.ModelSerializer):
         fields = ("id", "nom", "type", "chemin_fichier", "date_upload", "taille_fichier")
         read_only_fields = ("id", "date_upload", "taille_fichier")
 
+    def create(self, validated_data):
+        file_field = validated_data.get("chemin_fichier")
+        if file_field is not None and hasattr(file_field, "size"):
+            validated_data["taille_fichier"] = file_field.size
+        return super().create(validated_data)
+
 class PaiementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paiement
