@@ -108,11 +108,8 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
     ordering_fields = ["date_creation"]
 
     def get_permissions(self):
-        if self.action in ["create"]:
-            return [AllowAny()]
-        elif self.action in ["list"]:
-            return [IsAuthenticated(), IsAdmin()]
-        return [IsAuthenticated()]
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -163,6 +160,10 @@ class AgentASDMViewSet(viewsets.ModelViewSet):
         except DemandeSubvention.DoesNotExist:
             return Response({"error": "Demande non trouvée"}, status=404)
 
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
+
 # ---- Demandes de Subvention ----
 class DemandeSubventionViewSet(viewsets.ModelViewSet):
     queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant__utilisateur").all().order_by("-date_soumission")
@@ -190,6 +191,10 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
             serializer.save(utilisateur=utilisateur_obj)
         else:
             serializer.save()
+
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
 
     @action(methods=["patch"], detail=True, url_path="statut")
     def update_statut(self, request, pk=None):
@@ -222,6 +227,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["type", "demande_subvention"]
     ordering_fields = ["date_upload", "taille_fichier"]
 
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
+
 # ---- Paiements ----
 class PaiementViewSet(viewsets.ModelViewSet):
     queryset = Paiement.objects.select_related("demande_subvention").all().order_by("-date_paiement")
@@ -245,6 +254,10 @@ class PaiementViewSet(viewsets.ModelViewSet):
         paiement.annuler()
         return Response({"message": "Paiement annulé"})
 
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
+
 # ---- Rapports ----
 class RapportViewSet(viewsets.ModelViewSet):
     queryset = Rapport.objects.select_related("agent__utilisateur").all().order_by("-date_generation")
@@ -262,6 +275,10 @@ class RapportViewSet(viewsets.ModelViewSet):
                 serializer.save(agent=agent)
             except AgentASDM.DoesNotExist:
                 return Response({"error": "Utilisateur n'est pas un agent"}, status=400)
+
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
 
 # ---- Notifications ----
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -293,6 +310,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification = self.get_object()
         notification.marquer_lu()
         return Response({"message": "Notification marquée comme lue"})
+
+    def get_permissions(self):
+        # Mode développement: rendre toutes les actions publiques
+        return [AllowAny()]
 
 @api_view(['GET'])
 def api_home(request):
