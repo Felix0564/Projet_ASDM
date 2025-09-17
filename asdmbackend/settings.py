@@ -128,6 +128,7 @@ REST_FRAMEWORK = {
 # CORS (allow frontend origins; extend as needed)
 CORS_ALLOWED_ORIGINS = [
     "https://projet-asdm.onrender.com",
+    "https://asdm-fronetend.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
@@ -136,6 +137,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Autoriser les sous-domaines Render si le frontend est hébergé ailleurs sur onrender.com
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
+     r"^https://.*\.vercel\.app$",
 ]
 
 # Headers CORS explicitement autorisés
