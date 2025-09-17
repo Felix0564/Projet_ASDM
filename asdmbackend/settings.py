@@ -133,9 +133,44 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Autoriser les sous-domaines Render si le frontend est hébergé ailleurs sur onrender.com
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+]
+
+# Headers CORS explicitement autorisés
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# Méthodes HTTP autorisées
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+# En dev seulement, on peut autoriser toutes les origines
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
 # Security cookies in production
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+# Cookies cross-site (nécessaire si frontend sur un autre domaine)
+CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "None"
 # from pathlib import Path
 # import os
 # import environ
