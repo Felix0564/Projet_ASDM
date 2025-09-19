@@ -12,7 +12,7 @@ from .models import (
     Paiement, Document, Rapport, Notification
 )
 from .serializers import (
-    UtilisateurCreateSerializer, UtilisateurPublicSerializer, AgentASDMSerializer,
+    UtilisateurCreateSerializer, UtilisateurPublicSerializer, UtilisateurUpdateSerializer, AgentASDMSerializer,
     DemandeSubventionSerializer, DemandeSubventionUpdateStatutSerializer,
     DocumentSerializer, PaiementSerializer, RapportSerializer, NotificationSerializer
 )
@@ -101,6 +101,7 @@ class UtilisateurAuthMiddleware:
 class UtilisateurViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
+                        mixins.UpdateModelMixin,
                         viewsets.GenericViewSet):
     queryset = Utilisateur.objects.all().order_by("-date_creation")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -114,6 +115,8 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
     def get_serializer_class(self):
         if self.action == "create":
             return UtilisateurCreateSerializer
+        if self.action in ("update", "partial_update"):
+            return UtilisateurUpdateSerializer
         return UtilisateurPublicSerializer
 
     @action(methods=["get"], detail=False, url_path="me")

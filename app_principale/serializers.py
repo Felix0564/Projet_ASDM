@@ -25,6 +25,22 @@ class UtilisateurPublicSerializer(serializers.ModelSerializer):
         fields = ("id", "nom", "prenom", "email", "role", "date_creation")
         read_only_fields = fields
 
+class UtilisateurUpdateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = Utilisateur
+        fields = ("nom", "prenom", "email", "role", "password")
+
+    def update(self, instance, validated_data):
+        pwd = validated_data.pop("password", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if pwd:
+            instance.set_password(pwd)
+        instance.save()
+        return instance
+
 class AgentASDMSerializer(serializers.ModelSerializer):
     utilisateur = UtilisateurPublicSerializer(read_only=True)
     utilisateur_id = serializers.PrimaryKeyRelatedField(
