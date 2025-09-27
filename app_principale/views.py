@@ -102,6 +102,7 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
                         mixins.UpdateModelMixin,
+                        mixins.DestroyModelMixin,
                         viewsets.GenericViewSet):
     queryset = Utilisateur.objects.all().order_by("-date_creation")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -129,6 +130,25 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
             except Utilisateur.DoesNotExist:
                 return Response({'error': 'Utilisateur non trouvé'}, status=404)
         return Response({'error': 'Non authentifié'}, status=401)
+
+    def perform_destroy(self, instance):
+        """
+        Supprime l'utilisateur et gère les relations automatiquement.
+        Les relations CASCADE dans les modèles s'occuperont de la suppression
+        des objets liés (AgentASDM, DemandeSubvention, Notifications, etc.)
+        """
+        # Vérifier si l'utilisateur a des demandes en cours
+        demandes_en_cours = instance.demandes_subvention.filter(
+            statut__in=['en_attente', 'en_etude']
+        ).exists()
+        
+        if demandes_en_cours:
+            # Optionnel: empêcher la suppression si des demandes sont en cours
+            # raise ValidationError("Impossible de supprimer un utilisateur avec des demandes en cours")
+            pass
+        
+        # Supprimer l'utilisateur (les relations CASCADE s'occuperont du reste)
+        instance.delete()
 
 # ---- Agents ASDM ----
 class AgentASDMViewSet(viewsets.ModelViewSet):
