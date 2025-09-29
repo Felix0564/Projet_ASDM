@@ -3,7 +3,12 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UtilisateurViewSet, AgentASDMViewSet, DemandeSubventionViewSet,
     DocumentViewSet, PaiementViewSet, RapportViewSet, NotificationViewSet, 
-    api_home, login_view, logout_view, user_profile, agents_disponibles
+    api_home, login_view, logout_view, user_profile, agents_disponibles,
+    # Dashboard views
+    dashboard_stats, dashboard_graphs, dashboard_metrics,
+    DashboardUtilisateurViewSet, DashboardDemandeSubventionViewSet, 
+    DashboardAgentASDMViewSet, DashboardDocumentViewSet, 
+    DashboardPaiementViewSet, DashboardNotificationViewSet
 )
 
 router = DefaultRouter()
@@ -14,6 +19,15 @@ router.register(r'documents', DocumentViewSet, basename='documents')
 router.register(r'paiements', PaiementViewSet, basename='paiements')
 router.register(r'rapports', RapportViewSet, basename='rapports')
 router.register(r'notifications', NotificationViewSet, basename='notifications')
+
+# Dashboard router
+dashboard_router = DefaultRouter()
+dashboard_router.register(r'utilisateurs', DashboardUtilisateurViewSet, basename='dashboard-utilisateurs')
+dashboard_router.register(r'demandes', DashboardDemandeSubventionViewSet, basename='dashboard-demandes')
+dashboard_router.register(r'agents', DashboardAgentASDMViewSet, basename='dashboard-agents')
+dashboard_router.register(r'documents', DashboardDocumentViewSet, basename='dashboard-documents')
+dashboard_router.register(r'paiements', DashboardPaiementViewSet, basename='dashboard-paiements')
+dashboard_router.register(r'notifications', DashboardNotificationViewSet, basename='dashboard-notifications')
 
 urlpatterns = [
     # Page d'accueil de l'API
@@ -29,6 +43,12 @@ urlpatterns = [
     
     # Endpoints de l'API
     path('api/', include(router.urls)),
+    
+    # Dashboard API
+    path('dashboard/stats/', dashboard_stats, name='dashboard_stats'),
+    path('dashboard/graphs/', dashboard_graphs, name='dashboard_graphs'),
+    path('dashboard/metrics/', dashboard_metrics, name='dashboard_metrics'),
+    path('dashboard/', include(dashboard_router.urls)),
     
     # Endpoints spécifiques pour les actions métier
     path('api/demandes/<int:pk>/valider/', 

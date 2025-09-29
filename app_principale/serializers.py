@@ -120,6 +120,101 @@ class DemandeSubventionAssignerAgentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("L'utilisateur doit avoir le rôle 'agent'")
         return value
 
+# ===== SERIALIZERS DASHBOARD =====
+
+class DashboardStatsSerializer(serializers.Serializer):
+    """Serializer pour les statistiques du dashboard"""
+    utilisateurs = serializers.DictField()
+    demandes = serializers.DictField()
+    financier = serializers.DictField()
+    documents = serializers.DictField()
+    paiements = serializers.DictField()
+    notifications = serializers.DictField()
+
+class DashboardGraphsSerializer(serializers.Serializer):
+    """Serializer pour les graphiques du dashboard"""
+    evolution_demandes = serializers.ListField()
+    repartition_type = serializers.ListField()
+    repartition_statut = serializers.ListField()
+    performance_agents = serializers.ListField()
+    montants_par_mois = serializers.ListField()
+
+class DashboardMetricsSerializer(serializers.Serializer):
+    """Serializer pour les métriques du dashboard"""
+    taux_acceptation = serializers.FloatField()
+    temps_moyen_traitement_jours = serializers.IntegerField()
+    montant_max_demande = serializers.DecimalField(max_digits=10, decimal_places=2)
+    montant_moyen_demande = serializers.DecimalField(max_digits=10, decimal_places=2)
+    agents_les_plus_actifs = serializers.ListField()
+
+class DashboardDemandeSubventionListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes de demandes dans le dashboard"""
+    utilisateur_nom = serializers.CharField(source='utilisateur.prenom', read_only=True)
+    utilisateur_email = serializers.CharField(source='utilisateur.email', read_only=True)
+    agent_nom = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DemandeSubvention
+        fields = (
+            "id", "type", "montant", "statut", "date_soumission", 
+            "utilisateur_nom", "utilisateur_email", "agent_nom"
+        )
+    
+    def get_agent_nom(self, obj):
+        if obj.agent_traitant:
+            return f"{obj.agent_traitant.prenom} {obj.agent_traitant.nom}"
+        return None
+
+class DashboardUtilisateurListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes d'utilisateurs dans le dashboard"""
+    nb_demandes = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Utilisateur
+        fields = ("id", "prenom", "nom", "email", "role", "date_creation", "nb_demandes")
+    
+    def get_nb_demandes(self, obj):
+        if obj.role == 'demandeur':
+            return obj.demandes_subvention.count()
+        elif obj.role == 'agent':
+            return obj.demandes_traitees.count()
+        return 0
+
+class DashboardDocumentListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes de documents dans le dashboard"""
+    demande_id = serializers.IntegerField(source='demande_subvention.id', read_only=True)
+    utilisateur_nom = serializers.CharField(source='demande_subvention.utilisateur.prenom', read_only=True)
+    
+    class Meta:
+        model = Document
+        fields = ("id", "nom", "type", "date_upload", "taille_fichier", "demande_id", "utilisateur_nom")
+
+class DashboardPaiementListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes de paiements dans le dashboard"""
+    demande_id = serializers.IntegerField(source='demande_subvention.id', read_only=True)
+    utilisateur_nom = serializers.CharField(source='demande_subvention.utilisateur.prenom', read_only=True)
+    
+    class Meta:
+        model = Paiement
+        fields = ("id", "montant", "mode_paiement", "statut", "date_paiement", "reference", "demande_id", "utilisateur_nom")
+
+class DashboardNotificationListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes de notifications dans le dashboard"""
+    utilisateur_nom = serializers.CharField(source='utilisateur.prenom', read_only=True)
+    
+    class Meta:
+        model = Notification
+        fields = ("id", "type", "contenu", "date_envoi", "lu", "priorite", "utilisateur_nom")
+
+class DashboardAgentStatsSerializer(serializers.Serializer):
+    """Serializer pour les statistiques d'un agent"""
+    agent = AgentASDMSerializer()
+    total_demandes = serializers.IntegerField()
+    demandes_acceptees = serializers.IntegerField()
+    demandes_refusees = serializers.IntegerField()
+    taux_acceptation = serializers.FloatField()
+    montant_total = serializers.DecimalField(max_digits=10, decimal_places=2)
+
 class RapportSerializer(serializers.ModelSerializer):
     agent = AgentASDMSerializer(read_only=True)
     
