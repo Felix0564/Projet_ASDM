@@ -83,21 +83,42 @@ class DemandeSubventionSerializer(serializers.ModelSerializer):
     )
     documents = DocumentSerializer(many=True, read_only=True)
     paiement = PaiementSerializer(read_only=True)
-    agent_traitant = AgentASDMSerializer(read_only=True)
+    # Modification : agent_traitant est maintenant un Utilisateur avec rôle agent
+    agent_traitant = UtilisateurPublicSerializer(read_only=True)
+    agent_traitant_id = serializers.PrimaryKeyRelatedField(
+        queryset=Utilisateur.objects.filter(role='agent'), write_only=True, 
+        source='agent_traitant', required=False
+    )
     
     class Meta:
         model = DemandeSubvention
         fields = (
             "id", "type", "montant", "statut", "date_soumission", 
             "date_traitement", "commentaires", "utilisateur", "utilisateur_id",
-            "agent_traitant", "documents", "paiement"
+            "agent_traitant", "agent_traitant_id", "documents", "paiement"
         )
-        read_only_fields = ("id", "date_soumission", "date_traitement", "agent_traitant")
+        read_only_fields = ("id", "date_soumission", "date_traitement")
 
 class DemandeSubventionUpdateStatutSerializer(serializers.ModelSerializer):
     class Meta:
         model = DemandeSubvention
         fields = ("statut", "commentaires")
+
+class DemandeSubventionAssignerAgentSerializer(serializers.ModelSerializer):
+    agent_traitant_id = serializers.PrimaryKeyRelatedField(
+        queryset=Utilisateur.objects.filter(role='agent'), 
+        source='agent_traitant', 
+        write_only=True
+    )
+    
+    class Meta:
+        model = DemandeSubvention
+        fields = ("agent_traitant_id",)
+    
+    def validate_agent_traitant_id(self, value):
+        if value.role != 'agent':
+            raise serializers.ValidationError("L'utilisateur doit avoir le rôle 'agent'")
+        return value
 
 class RapportSerializer(serializers.ModelSerializer):
     agent = AgentASDMSerializer(read_only=True)

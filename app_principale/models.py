@@ -97,18 +97,20 @@ class AgentASDM(models.Model):
     
     def valider_demande(self, demande):
         """Valide une demande de subvention"""
-        demande.statut = 'accepte'
-        demande.date_traitement = timezone.now()
-        demande.agent_traitant = self
-        demande.save()
+        # Vérifier que l'utilisateur associé à cet agent est bien l'agent assigné
+        if demande.agent_traitant != self.utilisateur:
+            raise ValueError("Cet agent n'est pas assigné à cette demande")
+        
+        demande.valider_demande()
         return True
     
     def rejeter_demande(self, demande):
         """Rejette une demande de subvention"""
-        demande.statut = 'refuse'
-        demande.date_traitement = timezone.now()
-        demande.agent_traitant = self
-        demande.save()
+        # Vérifier que l'utilisateur associé à cet agent est bien l'agent assigné
+        if demande.agent_traitant != self.utilisateur:
+            raise ValueError("Cet agent n'est pas assigné à cette demande")
+        
+        demande.rejeter_demande()
         return True
     
     def generer_rapport(self):
@@ -119,8 +121,13 @@ class AgentASDM(models.Model):
         )
     
     def administrer_dossiers(self):
-        """Administre les dossiers"""
-        return DemandeSubvention.objects.all()
+        """Administre les dossiers assignés à cet agent"""
+        return DemandeSubvention.objects.filter(agent_traitant=self.utilisateur)
+    
+    @classmethod
+    def get_agents_disponibles(cls):
+        """Retourne tous les agents disponibles (utilisateurs avec rôle agent)"""
+        return Utilisateur.objects.filter(role='agent')
 
 
 class DemandeSubvention(models.Model):
@@ -149,7 +156,10 @@ class DemandeSubvention(models.Model):
     
     # Relations
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='demandes_subvention')
-    agent_traitant = models.ForeignKey(AgentASDM, on_delete=models.SET_NULL, null=True, blank=True, related_name='demandes_traitees')
+    # Modification : assigner directement un utilisateur avec le rôle agent
+    agent_traitant = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, 
+                                     related_name='demandes_traitees', 
+                                     limit_choices_to={'role': 'agent'})
     
     def __str__(self):
         return f"Demande {self.id} - {self.utilisateur.prenom} {self.utilisateur.nom} - {self.montant}€"
@@ -173,6 +183,36 @@ class DemandeSubvention(models.Model):
         """Ajoute un document à la demande"""
         document.demande_subvention = self
         document.save()
+        return True
+    
+    def assigner_agent(self, agent_utilisateur):
+        """Assigne un utilisateur avec le rôle agent à la demande"""
+        if agent_utilisateur.role != 'agent':
+            raise ValueError("L'utilisateur doit avoir le rôle 'agent'")
+        
+        self.agent_traitant = agent_utilisateur
+        self.statut = 'en_etude'
+        self.save()
+        return True
+    
+    def valider_demande(self):
+        """Valide la demande de subvention"""
+        if not self.agent_traitant:
+            raise ValueError("Aucun agent assigné à cette demande")
+        
+        self.statut = 'accepte'
+        self.date_traitement = timezone.now()
+        self.save()
+        return True
+    
+    def rejeter_demande(self):
+        """Rejette la demande de subvention"""
+        if not self.agent_traitant:
+            raise ValueError("Aucun agent assigné à cette demande")
+        
+        self.statut = 'refuse'
+        self.date_traitement = timezone.now()
+        self.save()
         return True
 
 class Paiement(models.Model):

@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UtilisateurViewSet, AgentASDMViewSet, DemandeSubventionViewSet,
     DocumentViewSet, PaiementViewSet, RapportViewSet, NotificationViewSet, 
-    api_home, login_view, logout_view, user_profile
+    api_home, login_view, logout_view, user_profile, agents_disponibles
 )
 
 router = DefaultRouter()
@@ -24,6 +24,9 @@ urlpatterns = [
     path('auth/logout/', logout_view, name='logout'),
     path('auth/profile/', user_profile, name='user_profile'),
     
+    # Utilitaires
+    path('agents-disponibles/', agents_disponibles, name='agents_disponibles'),
+    
     # Endpoints de l'API
     path('api/', include(router.urls)),
     
@@ -34,6 +37,9 @@ urlpatterns = [
     path('api/demandes/<int:pk>/rejeter/', 
          DemandeSubventionViewSet.as_view({'patch': 'update_statut'}), 
          name='rejeter_demande'),
+    path('api/demandes/<int:pk>/assigner-agent/', 
+         DemandeSubventionViewSet.as_view({'post': 'assigner_agent'}), 
+         name='assigner_agent'),
     path('api/demandes/<int:pk>/documents/', 
          DemandeSubventionViewSet.as_view({'post': 'ajouter_document'}), 
          name='ajouter_document'),

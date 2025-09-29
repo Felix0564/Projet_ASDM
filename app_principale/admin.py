@@ -56,6 +56,10 @@ class DemandeSubventionAdmin(admin.ModelAdmin):
     ordering = ("-date_soumission",)
     readonly_fields = ("date_soumission", "date_traitement")
     
+    def get_queryset(self, request):
+        """Optimise la requête pour éviter les problèmes de jointure"""
+        return super().get_queryset(request).select_related("utilisateur", "agent_traitant")
+    
     fieldsets = (
         ('Informations de base', {
             'fields': ('utilisateur', 'type', 'montant', 'statut')

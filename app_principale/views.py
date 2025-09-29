@@ -13,7 +13,7 @@ from .models import (
 )
 from .serializers import (
     UtilisateurCreateSerializer, UtilisateurPublicSerializer, UtilisateurUpdateSerializer, AgentASDMSerializer,
-    DemandeSubventionSerializer, DemandeSubventionUpdateStatutSerializer,
+    DemandeSubventionSerializer, DemandeSubventionUpdateStatutSerializer, DemandeSubventionAssignerAgentSerializer,
     DocumentSerializer, PaiementSerializer, RapportSerializer, NotificationSerializer
 )
 from .permissions import IsOwnerOrReadOnly, IsAdmin, IsAgent, IsAuthenticatedCustom
@@ -189,7 +189,7 @@ class AgentASDMViewSet(viewsets.ModelViewSet):
 
 # ---- Demandes de Subvention ----
 class DemandeSubventionViewSet(viewsets.ModelViewSet):
-    queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant__utilisateur").all().order_by("-date_soumission")
+    queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant").all().order_by("-date_soumission")
     serializer_class = DemandeSubventionSerializer
     permission_classes = [IsAuthenticatedCustom, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -239,6 +239,29 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save(demande_subvention=demande)
             return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+    
+    @action(methods=["post"], detail=True, url_path="assigner-agent")
+    def assigner_agent(self, request, pk=None):
+        """Assigne un utilisateur avec le rôle agent à la demande"""
+        user_role = request.session.get('user_role')
+        if not (user_role in ("agent", "admin")):
+            return Response({"detail": "Non autorisé. Seuls les agents et admins peuvent assigner des agents."}, status=403)
+        
+        demande = self.get_object()
+        serializer = DemandeSubventionAssignerAgentSerializer(demande, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            try:
+                # Utiliser la méthode du modèle pour assigner l'agent
+                demande.assigner_agent(serializer.validated_data['agent_traitant'])
+                return Response({
+                    "message": f"Agent assigné avec succès à la demande {demande.id}",
+                    "demande": DemandeSubventionSerializer(demande).data
+                }, status=200)
+            except ValueError as e:
+                return Response({"error": str(e)}, status=400)
+        
         return Response(serializer.errors, status=400)
 
 # ---- Documents ----
@@ -362,6 +385,17 @@ def api_home(request):
             'notifications': '/api/notifications/',
             'admin': '/admin/',
         }
+    }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def agents_disponibles(request):
+    """
+    Retourne la liste des utilisateurs avec le rôle agent disponibles pour assignation
+    """
+    agents = Utilisateur.objects.filter(role='agent').values('id', 'prenom', 'nom', 'email')
+    return Response({
+        'agents_disponibles': list(agents),
+        'total': agents.count()
     }, status=status.HTTP_200_OK)
 
 
