@@ -158,7 +158,7 @@ class UtilisateurViewSet(mixins.CreateModelMixin,
 class AgentASDMViewSet(viewsets.ModelViewSet):
     queryset = AgentASDM.objects.select_related("utilisateur").all().order_by("-utilisateur__date_creation")
     serializer_class = AgentASDMSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["utilisateur__email", "utilisateur__prenom", "utilisateur__nom", "fonction", "departement"]
     ordering_fields = ["utilisateur__date_creation"]
@@ -195,7 +195,7 @@ class AgentASDMViewSet(viewsets.ModelViewSet):
 class DemandeSubventionViewSet(viewsets.ModelViewSet):
     queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant").all().order_by("-date_soumission")
     serializer_class = DemandeSubventionSerializer
-    permission_classes = [IsAuthenticatedCustom, IsOwnerOrReadOnly]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["type", "statut", "utilisateur", "agent_traitant"]
     search_fields = ["commentaires"]
@@ -225,10 +225,8 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
 
     @action(methods=["patch"], detail=True, url_path="statut")
     def update_statut(self, request, pk=None):
-        """Agents/Admins peuvent changer le statut"""
-        user_role = request.session.get('user_role')
-        if not (user_role in ("agent", "admin")):
-            return Response({"detail": "Non autorisé."}, status=403)
+        """Met à jour le statut d'une demande"""
+        # Aucune vérification d'autorisation - mode développement libre
         demande = self.get_object()
         s = DemandeSubventionUpdateStatutSerializer(demande, data=request.data, partial=True)
         s.is_valid(raise_exception=True)
@@ -248,10 +246,7 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
     @action(methods=["post"], detail=True, url_path="assigner-agent")
     def assigner_agent(self, request, pk=None):
         """Assigne un utilisateur avec le rôle agent à la demande"""
-        user_role = request.session.get('user_role')
-        if not (user_role in ("agent", "admin")):
-            return Response({"detail": "Non autorisé. Seuls les agents et admins peuvent assigner des agents."}, status=403)
-        
+        # Aucune vérification d'autorisation - mode développement libre
         demande = self.get_object()
         serializer = DemandeSubventionAssignerAgentSerializer(demande, data=request.data, partial=True)
         
@@ -272,7 +267,7 @@ class DemandeSubventionViewSet(viewsets.ModelViewSet):
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.select_related("demande_subvention").all().order_by("-date_upload")
     serializer_class = DocumentSerializer
-    permission_classes = [IsAuthenticatedCustom]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["type", "demande_subvention"]
     ordering_fields = ["date_upload", "taille_fichier"]
@@ -285,7 +280,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 class PaiementViewSet(viewsets.ModelViewSet):
     queryset = Paiement.objects.select_related("demande_subvention").all().order_by("-date_paiement")
     serializer_class = PaiementSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAgent]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["statut", "mode_paiement", "demande_subvention"]
     ordering_fields = ["date_paiement", "montant"]
@@ -312,7 +307,7 @@ class PaiementViewSet(viewsets.ModelViewSet):
 class RapportViewSet(viewsets.ModelViewSet):
     queryset = Rapport.objects.select_related("agent__utilisateur").all().order_by("-date_generation")
     serializer_class = RapportSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAgent]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["format", "agent", "periode"]
     ordering_fields = ["date_generation"]
@@ -334,24 +329,18 @@ class RapportViewSet(viewsets.ModelViewSet):
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.select_related("utilisateur").all().order_by("-date_envoi")
     serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticatedCustom]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_fields = ["utilisateur", "type", "lu", "priorite"]
     ordering_fields = ["date_envoi"]
     search_fields = ["contenu"]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        user_role = self.request.session.get('user_role')
-        if user_role == "demandeur":
-            user_id = self.request.session.get('user_id')
-            return qs.filter(utilisateur_id=user_id)
-        return qs
+        # Aucune restriction - mode développement libre
+        return super().get_queryset()
 
     def perform_create(self, serializer):
-        user_role = self.request.session.get('user_role')
-        if not (user_role in ("agent", "admin")):
-            raise PermissionError("Non autorisé.")
+        # Aucune vérification d'autorisation - mode développement libre
         serializer.save()
 
     @action(methods=["post"], detail=True, url_path="marquer-lu")
@@ -608,7 +597,7 @@ class DashboardUtilisateurViewSet(viewsets.ModelViewSet):
     """
     queryset = Utilisateur.objects.all().order_by("-date_creation")
     serializer_class = UtilisateurPublicSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["email", "prenom", "nom", "role"]
     filterset_fields = ["role"]
@@ -652,7 +641,7 @@ class DashboardDemandeSubventionViewSet(viewsets.ModelViewSet):
     """
     queryset = DemandeSubvention.objects.select_related("utilisateur", "agent_traitant").all().order_by("-date_soumission")
     serializer_class = DemandeSubventionSerializer
-    permission_classes = [IsAuthenticatedCustom]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["type", "statut", "utilisateur", "agent_traitant"]
     search_fields = ["commentaires", "utilisateur__email", "utilisateur__prenom", "utilisateur__nom"]
@@ -762,7 +751,7 @@ class DashboardAgentASDMViewSet(viewsets.ModelViewSet):
     """
     queryset = AgentASDM.objects.select_related("utilisateur").all().order_by("-utilisateur__date_creation")
     serializer_class = AgentASDMSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["utilisateur__email", "utilisateur__prenom", "utilisateur__nom", "fonction", "departement"]
     filterset_fields = ["droits_validation", "departement", "fonction"]
@@ -818,7 +807,7 @@ class DashboardDocumentViewSet(viewsets.ModelViewSet):
     """
     queryset = Document.objects.select_related("demande_subvention").all().order_by("-date_upload")
     serializer_class = DocumentSerializer
-    permission_classes = [IsAuthenticatedCustom]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["type", "demande_subvention"]
     search_fields = ["nom", "demande_subvention__utilisateur__email"]
@@ -847,7 +836,7 @@ class DashboardPaiementViewSet(viewsets.ModelViewSet):
     """
     queryset = Paiement.objects.select_related("demande_subvention").all().order_by("-date_paiement")
     serializer_class = PaiementSerializer
-    permission_classes = [IsAuthenticatedCustom, IsAgent]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["statut", "mode_paiement", "demande_subvention"]
     ordering_fields = ["date_paiement", "montant"]
@@ -883,7 +872,7 @@ class DashboardNotificationViewSet(viewsets.ModelViewSet):
     """
     queryset = Notification.objects.select_related("utilisateur").all().order_by("-date_envoi")
     serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticatedCustom]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_fields = ["utilisateur", "type", "lu", "priorite"]
     search_fields = ["contenu", "utilisateur__email"]
@@ -895,12 +884,8 @@ class DashboardNotificationViewSet(viewsets.ModelViewSet):
         return [AllowAny()]
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        user_role = self.request.session.get('user_role')
-        if user_role == "demandeur":
-            user_id = self.request.session.get('user_id')
-            return qs.filter(utilisateur_id=user_id)
-        return qs
+        # Aucune restriction - mode développement libre
+        return super().get_queryset()
 
     @action(methods=["get"], detail=False, url_path="non-lues")
     def list_non_lues(self, request):
